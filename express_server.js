@@ -65,6 +65,13 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
+//Add a POST route that removes a URL resource: POST /urls/:id/delete
+app.post('/urls/:id/delete', (req, response) => {
+  const id = req.params.id
+  delete urlDatabase[id];
+  response.redirect('/urls');
+});
+
 
 // app.get("/urls/:id", (req, res) => {
 //   const id = req.params.id;
