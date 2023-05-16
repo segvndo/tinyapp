@@ -10,7 +10,16 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-const generateRandomString = function() {};
+const generateRandomString = function(length) {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()';
+   let charLength = chars.length;
+   let result = '';
+   for ( var i = 0; i < length; i++ ) {
+      result += chars.charAt(Math.floor(Math.random() * charLength));
+   }
+   return result;
+};
+
 app.use(express.urlencoded({ extended: true }));
 
 //res.render("urls_index", templateVars) will take info from urls_index and show it in the browser. In this case, the templateVars, which is an object containing an object.
@@ -23,17 +32,37 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  //res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  const id = generateRandomString(6);
+
+  //After generating new short URL id, add it to database.
+  urlDatabase[id] = req.body.longURL;
+
+  console.log(urlDatabase);
+  //Our server then responds with a redirect to /urls/:id.
+  res.redirect(`/urls/${id}`);
 });
 
+
+//Our browser then makes a GET request to /urls/:id.
+//Using the id, server looks up the longURL from the database,
 app.get("/urls/:id", (req, res) => {
+  //sends the id and longURL to the urls_show template,
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id]
   };
+  //generates the HTML, and then sends this HTML back to the browser.
+  //The browser then renders this HTML.
   res.render("urls_show", templateVars);
+});
+
+app.get("/u/:id", (req, res) => {
+  const longURL = urlDatabase[req.params.id]
+  res.redirect(longURL);
 });
 
 
