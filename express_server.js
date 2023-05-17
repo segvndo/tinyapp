@@ -55,6 +55,8 @@ app.get("/urls/:id", (req, res) => {
     id: req.params.id,
     longURL: urlDatabase[req.params.id]
   };
+  console.log(templateVars);
+  console.log(urlDatabase);
   //generates the HTML, and then sends this HTML back to the browser.
   //The browser then renders this HTML.
   res.render("urls_show", templateVars);
@@ -72,6 +74,17 @@ app.post('/urls/:id/delete', (req, response) => {
   response.redirect('/urls');
 });
 
+app.post('/urls/:id/edit', (req, response) => {
+  const id = req.params.id
+  const newURL = req.body.longUrls
+  urlDatabase[id] = newURL
+  response.redirect(`/urls/${id}`);
+});
+
+app.get('/urls/:id/edit', (req, response) => {
+  const id = req.params.id
+  response.redirect(`/urls/${id}`);
+});
 
 // app.get("/urls/:id", (req, res) => {
 //   const id = req.params.id;
