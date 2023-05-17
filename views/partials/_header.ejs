@@ -18,5 +18,21 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
+    <p> <%= username %></p>
+  <% if(username){ %>
+    <h1><%= username %></h1>
+    <form class= "form-inline" method="POST" action="/logout">
+      <button type="submit">Logout</button>
+      </form>
+  <% } else{ %>  
+    <form class= "form-inline" method="POST" action="/login">
+      <input type="text" name='username'>
+      &nbsp
+      <input type="text" name='password'>
+      <button type="submit">Login</button>
+    </form>
+  <% } %>
   </nav>
 </header>
+
+Create a new template that includes a form with an email address and password field. The email field should use type=email and have name=email. The password field should use type=password and have name=password. The form should POST to /register.

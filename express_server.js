@@ -3,6 +3,7 @@ const app = express();
 const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs")
+const cookieParser = require('cookie-parser')
 
 //Used to keep track of all the URLs and their shortened forms
 const urlDatabase = {
@@ -21,15 +22,17 @@ const generateRandomString = function(length) {
 };
 
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 //res.render("urls_index", templateVars) will take info from urls_index and show it in the browser. In this case, the templateVars, which is an object containing an object.
 app.get("/urls", (req, res) => {
-  const templateVars = {urls: urlDatabase};
+  const templateVars = {urls: urlDatabase, username: req.cookies["username"]};
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = {urls: urlDatabase, username: req.cookies["username"]};
+  res.render("urls_new", templateVars);
 });
 
 
@@ -53,7 +56,8 @@ app.get("/urls/:id", (req, res) => {
   //sends the id and longURL to the urls_show template,
   const templateVars = {
     id: req.params.id,
-    longURL: urlDatabase[req.params.id]
+    longURL: urlDatabase[req.params.id],
+    username: req.cookies["username"]
   };
   console.log(templateVars);
   console.log(urlDatabase);
@@ -74,6 +78,14 @@ app.post('/urls/:id/delete', (req, response) => {
   response.redirect('/urls');
 });
 
+app.get('/urls/:id/edit', (req, response) => {
+  const id = req.params.id
+  console.log(id);
+  response.redirect(`/urls/${id}`);
+});
+
+//Add an endpoint to handle a POST to /login in your Express server
+//It should set a cookie named username to the value submitted in the request body via the login form. After our server has set the cookie it should redirect the browser back to the /urls page
 app.post('/urls/:id/edit', (req, response) => {
   const id = req.params.id
   const newURL = req.body.longUrls
@@ -81,20 +93,20 @@ app.post('/urls/:id/edit', (req, response) => {
   response.redirect(`/urls/${id}`);
 });
 
-app.get('/urls/:id/edit', (req, response) => {
-  const id = req.params.id
-  response.redirect(`/urls/${id}`);
+// app.get('/login', (req, res) => {
+//   return res.render(/'login')
+// });
+
+app.post('/login', (req, res) => {
+  const username = req.body.username;
+  res.cookie('username', username);
+  res.redirect('/urls');
 });
 
-// app.get("/urls/:id", (req, res) => {
-//   const id = req.params.id;
-//   const longURL = urlDatabase[id];
-//   if (longURL) {
-//     res.redirect(longURL);
-//   } else {
-//     res.status(404).send("URL not found");
-//   }
-// });
+app.post("/logout", (req, res) => {
+  res.clearCookie('username');
+  res.redirect('/urls');
+});
 
 // app.get("/", (req, res) => {
 //   res.send("Hello!");
