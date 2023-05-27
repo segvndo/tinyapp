@@ -84,14 +84,6 @@ app.get("/urls", (req, res) => {
   }
 
   const urls = urlsForUser(userid);
-  // if (!urls) {
-  //   const templateVars = {
-  //     urls: null,
-  //     users: user
-  //   }
-  // return res.render("urls_index", templateVars);
-  // }
-  
   const templateVars = {
     urls: urls,
     users: user
@@ -110,16 +102,6 @@ app.get("/urls/new", (req, res) => {
 
 
 app.post("/urls", (req, res) => {
-  // console.log(req.body); // Log the POST request body to the console
-  // //res.send("Ok"); // Respond with 'Ok' (we will replace this)
-  // const id = generateRandomString(6);
-
-  // //After generating new short URL id, add it to database.
-  // urlDatabase[id] = req.body.longURL;
-
-  // console.log(urlDatabase);
-  // //Our server then responds with a redirect to /urls/:id.
-  // res.redirect(`/urls/${id}`);
   const userID = req.cookies.user_id;
   const user = users[userID]
   //const id = req.params.id
