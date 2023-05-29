@@ -14,66 +14,16 @@ app.use(cookieSession ({
   keys: ['abc']
 }));
 
-//Used to keep track of all the URLs and their shortened forms
-// const urlDatabase = {
-//   b6UTxQ: {
-//     longURL: "https://www.tsn.ca",
-//     userID: "aJ48lW",
-//   },
-//   i3BoGr: {
-//     longURL: "https://www.google.ca",
-//     userID: "aJ48lW",
-//   },
-// };
-
-// const users = {
-//   userRandomID: {
-//     id: "userRandomID",
-//     email: "user@example.com",
-//     password: "purple-monkey-dinosaur",
-//   },
-//   user2RandomID: {
-//     id: "user2RandomID",
-//     email: "user2@example.com",
-//     password: "dishwasher-funk",
-//   },
-// };
-
-// const generateRandomString = function() {
-//   const randomString = Math.random().toString().substr(2, 6)
-//   return randomString;
-// }
-
-// const getUserByEmail = function (email) {
-//   for (let userID in users) {
-//     if (users[userID].email === email) {
-//       return users[userID];
-//     }
-//   }
-//   return null;
-// };
-
-// function urlsForUser(user) {
-//   const urls = {};
-//   for (let shortURL in urlDatabase) {
-//     if (urlDatabase[shortURL].userID === user) {
-//       urls[shortURL] = urlDatabase[shortURL];
-//     }
-//   }
-//   return urls;
-// }
 
 //Parses req.body for POST requests
 app.use(express.urlencoded({ extended: true }));
 
 //res.render("urls_index", templateVars) will take info from urls_index and show it in the browser. In this case, the templateVars, which is an object containing an object.
 app.get("/urls", (req, res) => {
-  // let userid = req.cookies["user_id"];
   let userid = req.session.user_id;
  
   let user = users[userid];
   if (!userid) {
-    // res.redirect('/login')
     res.status(403).send(`<div>You must login <a href="http://localhost:8080/login">Login</a> </div>`);
     return;
   }
@@ -95,11 +45,9 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
-
 app.post("/urls", (req, res) => {
   const userID = req.session.user_id;
   const user = users[userID]
-  //const id = req.params.id
   if (!user) {
     res.send('You must login')
     return;
@@ -118,7 +66,6 @@ app.post("/urls", (req, res) => {
 //Our browser then makes a GET request to /urls/:id.
 //Using the id, server looks up the longURL from the database,
 app.get("/urls/:id", (req, res) => {
-  //sends the id and longURL to the urls_show template,
   const users = req.session.user_id;
   if (!users) {
     return res.status(403).send("Must login or register");
@@ -128,9 +75,6 @@ app.get("/urls/:id", (req, res) => {
   if (!url) {
     return res.status(403).send("URL Not Found");
   }
-  console.log(req.session.user_id);
-  console.log(url.userID)
-  console.log(url);
   if (url.userID !== req.session.user_id) {
     return res.status(403).send("Access Denied");
   }
@@ -139,17 +83,11 @@ app.get("/urls/:id", (req, res) => {
     longURL: urlDatabase[req.params.id].longURL,
     users: req.session.user_id
   };
-  console.log(templateVars);
-  console.log(urlDatabase);
-  //generates the HTML, and then sends this HTML back to the browser.
-  //The browser then renders this HTML.
+
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:id", (req, res) => {
-  // const shortURL = req.params.id;
-  // const longURL = urlDatabase[shortURL];
-  // res.redirect(longURL);
   
   const longURL = urlDatabase[req.params.id].longURL
   if (longURL) {
@@ -159,19 +97,7 @@ app.get("/u/:id", (req, res) => {
     res.status(404).send("URL not found");
     return;
     }
-  //res.redirect(longURL);
 });
-
-//samp.
-// app.get("/u/:id", (req, res) => {
-//   const urlID = req.params.id;
-//   if (!urlDatabase[urlID].longURL) {
-//     return res.send("URL Does Not Exist");
-//   }
-//   const longURL = urlDatabase[urlID].longURL;
-//   res.redirect(longURL);
-// });
-
 
 //Add a POST route that removes a URL resource: POST /urls/:id/delete
 app.post('/urls/:id/delete', (req, res) => {
@@ -190,14 +116,14 @@ app.post('/urls/:id/delete', (req, res) => {
 });
 
 //Edit
-app.post('/urls/:id/edit', (req, response) => {
+app.post('/urls/:id', (req, response) => {
   const id = req.params.id
   const newURL = req.body.longUrls
   urlDatabase[id].longURL = newURL
   response.redirect(`/urls/${id}`);
 });
 
-app.get('/urls/:id/edit', (req, response) => {
+app.get('/urls/:id', (req, response) => {
   const id = req.params.id
   response.redirect(`/urls/${id}`);
 });
@@ -234,31 +160,7 @@ app.post('/login', (req, res) => {
   } else {
     res.send("Either the username or password does not match");
   }
-  
-  //const hashedPassword = bcrypt.compareSync(password, user.password);
-  // for (const user in users) {    
-  //   if (users[user].email === email) {
-  //     if (hashedPassword) {
-  //       user.id = res.cookie('user_id', users[user].id);
-  //       //return res.redirect('/urls');
-  //     }
-  //   }
-  // }
-  
 });
-
-// app.post("/login", (req,res) => {
-//   const user = getUserByEmail(req.body.email, users);
-//   if (!user) {
-//     return res.status(403).send("Email And/Or Password Invalid");
-//   }
-//   const passwordMatch = bcrypt.compareSync(req.body.password, user.password); 
-//   if (passwordMatch) {
-//     req.session.user_id = user.id;
-//     return res.redirect('/urls');
-//   }
-//   return res.status(403).send("Email And/Or Password Invalid");
-// });
 
 //Logout; redirect to urls
 app.post("/logout", (req, res) => {
@@ -292,21 +194,6 @@ app.post("/register", (req, res) => {
     return;
   }
 
-//   const newUser = {
-//     id: generateRandomString(6),
-//     email: req.body,email,
-//     password: hashedPassword,
-//   };
-
-//   users[newUser.id] = newUser;
-
-// set the cookie session 
-
-//   //Set cookie to user_id
-//   res.cookie('user_id', id);
-//   res.redirect('/urls');
-// });
-
   const newUser = {
     id,
     email,
@@ -316,24 +203,9 @@ app.post("/register", (req, res) => {
   users[newUser.id] = newUser;
 
   req.session.user_id = newUser.id;
-  //Set cookie to user_id
-  //res.cookie('user_id', id);
   res.redirect('/urls');
 });
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
-
-
-app.get("/", (req, res) => {
-  res.send("Hello!");
-});
-
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-
-// app.get("/hello", (req, res) => {
-//   res.send("<html><body>Hello <b>World</b></body></html>\n");
-// });

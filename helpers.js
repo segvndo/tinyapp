@@ -11,6 +11,7 @@ const users = {
   },
 };
 
+//Used to keep track of all the URLs and their shortened forms
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
