@@ -18,18 +18,21 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
-    <p> <%= username %></p>
-  <% if(username){ %>
-    <h1><%= username %></h1>
+    <!-- <p> <%= users %></p> -->
+  <% if(users){ %>
+    <h1><%= users.email %></h1>
     <form class= "form-inline" method="POST" action="/logout">
       <button type="submit">Logout</button>
       </form>
   <% } else{ %>  
-    <form class= "form-inline" method="POST" action="/login">
-      <input type="text" name='username'>
+    <form class= "form-inline" method="GET" action="/login">
+      <!-- <input type="text" name='email'> -->
       &nbsp
-      <input type="text" name='password'>
+      <!-- <input type="password" name='password'> -->
       <button type="submit">Login</button>
+    </form>
+    <form class= "form-inline" method="GET" action="/register">
+      <button type="submit">Register</button>
     </form>
   <% } %>
   </nav>

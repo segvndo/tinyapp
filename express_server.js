@@ -1,124 +1,211 @@
+const bcrypt = require("bcryptjs");
+// const cookieParser = require("cookie-parser");
+const cookieSession = require("cookie-session");
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
+const {users, urlDatabase, generateRandomString, getUserByEmail, urlsForUser} = require("./helpers");
 
+//Mid-ware
 app.set("view engine", "ejs")
-const cookieParser = require('cookie-parser')
+// app.use(cookieParser());
+app.use(cookieSession ({
+  name: "session",
+  keys: ['abc']
+}));
 
-//Used to keep track of all the URLs and their shortened forms
-const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
-};
 
-const generateRandomString = function(length) {
-  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()';
-   let charLength = chars.length;
-   let result = '';
-   for ( var i = 0; i < length; i++ ) {
-      result += chars.charAt(Math.floor(Math.random() * charLength));
-   }
-   return result;
-};
-
+//Parses req.body for POST requests
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 //res.render("urls_index", templateVars) will take info from urls_index and show it in the browser. In this case, the templateVars, which is an object containing an object.
 app.get("/urls", (req, res) => {
-  const templateVars = {urls: urlDatabase, username: req.cookies["username"]};
+  let userid = req.session.user_id;
+ 
+  let user = users[userid];
+  if (!userid) {
+    res.status(403).send(`<div>You must login <a href="http://localhost:8080/login">Login</a> </div>`);
+    return;
+  }
+
+  const urls = urlsForUser(userid);
+  const templateVars = {
+    urls: urls,
+    users: user
+  };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = {urls: urlDatabase, username: req.cookies["username"]};
+  const templateVars = {users: req.session.user_id};
+  if (!templateVars.users) {
+    res.redirect('/login');
+    return;
+  }
   res.render("urls_new", templateVars);
 });
 
-
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
-  //res.send("Ok"); // Respond with 'Ok' (we will replace this)
-  const id = generateRandomString(6);
+  const userID = req.session.user_id;
+  const user = users[userID]
+  if (!user) {
+    res.send('You must login')
+    return;
+  }
 
-  //After generating new short URL id, add it to database.
-  urlDatabase[id] = req.body.longURL;
+  const shortURL = generateRandomString();
+  const longURL = req.body.longURL;
+  const url = {longURL, userID};
 
+  urlDatabase[shortURL] = url;
   console.log(urlDatabase);
-  //Our server then responds with a redirect to /urls/:id.
-  res.redirect(`/urls/${id}`);
+  res.redirect(`/urls/${shortURL}`);
 });
 
 
 //Our browser then makes a GET request to /urls/:id.
 //Using the id, server looks up the longURL from the database,
 app.get("/urls/:id", (req, res) => {
-  //sends the id and longURL to the urls_show template,
+  const users = req.session.user_id;
+  if (!users) {
+    return res.status(403).send("Must login or register");
+  }
+  const shortURL = req.params.id;
+  const url = urlDatabase[shortURL];
+  if (!url) {
+    return res.status(403).send("URL Not Found");
+  }
+  if (url.userID !== req.session.user_id) {
+    return res.status(403).send("Access Denied");
+  }
   const templateVars = {
     id: req.params.id,
-    longURL: urlDatabase[req.params.id],
-    username: req.cookies["username"]
+    longURL: urlDatabase[req.params.id].longURL,
+    users: req.session.user_id
   };
-  console.log(templateVars);
-  console.log(urlDatabase);
-  //generates the HTML, and then sends this HTML back to the browser.
-  //The browser then renders this HTML.
+
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id]
-  res.redirect(longURL);
+  
+  const longURL = urlDatabase[req.params.id].longURL
+  if (longURL) {
+    res.redirect(longURL);
+    return;
+    } else {
+    res.status(404).send("URL not found");
+    return;
+    }
 });
 
 //Add a POST route that removes a URL resource: POST /urls/:id/delete
-app.post('/urls/:id/delete', (req, response) => {
+app.post('/urls/:id/delete', (req, res) => {
+  const userID = req.session.user_id;
   const id = req.params.id
+  if (!userID) {
+    res.send('You must login')
+    return;
+  }
+  if (!urlDatabase[id]) {
+    res.status(404).send("URL not found!");
+    return;
+  }
   delete urlDatabase[id];
-  response.redirect('/urls');
+  res.redirect('/urls');
 });
 
-app.get('/urls/:id/edit', (req, response) => {
-  const id = req.params.id
-  console.log(id);
-  response.redirect(`/urls/${id}`);
-});
-
-//Add an endpoint to handle a POST to /login in your Express server
-//It should set a cookie named username to the value submitted in the request body via the login form. After our server has set the cookie it should redirect the browser back to the /urls page
-app.post('/urls/:id/edit', (req, response) => {
+//Edit
+app.post('/urls/:id', (req, response) => {
   const id = req.params.id
   const newURL = req.body.longUrls
-  urlDatabase[id] = newURL
+  urlDatabase[id].longURL = newURL
   response.redirect(`/urls/${id}`);
 });
 
-// app.get('/login', (req, res) => {
-//   return res.render(/'login')
-// });
+app.get('/urls/:id', (req, response) => {
+  const id = req.params.id
+  response.redirect(`/urls/${id}`);
+});
 
+app.get("/login", (req, res) => {
+  const userID = req.session.user_id;
+  const user = users[userID];
+  return res.render("login", { users: userID })
+  //res.redirect('/login');
+});
+
+function checkEmailandPassword(email, password){
+  for(let u in users){
+    if(users[u].email === email){
+      //once the email matches, then we have to compare the password (brcypt)
+      if(bcrypt.compareSync(password, users[u].password)){
+        return users[u];
+      }
+    }
+  }
+  return false;
+}
+//Login; redirect to urls after
 app.post('/login', (req, res) => {
-  const username = req.body.username;
-  res.cookie('username', username);
-  res.redirect('/urls');
+  //1. Receive the email and plain password from the user
+  const email = req.body.email;
+  const password = req.body.password; 
+
+  const user = checkEmailandPassword(email, password);
+  if(user){
+    //you need to write the cookie 
+    req.session.user_id = user.id;
+    res.redirect('/urls')
+  } else {
+    res.send("Either the username or password does not match");
+  }
 });
 
+//Logout; redirect to urls
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
-  res.redirect('/urls');
+  //res.clearCookie('user_id');
+  req.session = null;
+  res.redirect('/login');
 });
 
-// app.get("/", (req, res) => {
-//   res.send("Hello!");
-// });
+//Registry
+app.get('/register', (req, res) => {
+  const templateVars = { users: req.session.user_id };
+  res.render('registry', templateVars);
+});
 
-// app.get("/urls.json", (req, res) => {
-//   res.json(urlDatabase);
-// });
+//Endpoint that handles the registration form data
+app.post("/register", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(req.body.password, 10);
 
-// app.get("/hello", (req, res) => {
-//   res.send("<html><body>Hello <b>World</b></body></html>\n");
-// });
+  const id = generateRandomString(10);
+
+  //Check if email is already registered
+  if (getUserByEmail(email)) {
+    res.status(400).send("Error 400: Email already exists");
+    return;
+  }
+  //Check if email and password fields are empty, then send error msg if so
+  if (!email || !password) {
+    res.status(400).send("Error 400: Sorry, we could not find your account.")
+    return;
+  }
+
+  const newUser = {
+    id,
+    email,
+    password: hashedPassword
+  };
+
+  users[newUser.id] = newUser;
+
+  req.session.user_id = newUser.id;
+  res.redirect('/urls');
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
