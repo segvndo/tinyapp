@@ -15,12 +15,12 @@ Run the development web server using the node express_server.js command.
 
 
 App Preview:
-![Landing and login page](https://github.com/segvndo/tweeter/blob/master/docs/browserView.png)
+![Landing and login page](https://github.com/segvndo/tinyapp/blob/main/docs/login.jpg)
 
-![Screenshot of app form web browser](https://github.com/segvndo/tweeter/blob/master/docs/browserView.png)
+![Screenshot of page to create short URL](https://github.com/segvndo/tinyapp/blob/main/docs/createShortURL.jpg)
 
-![Screenshot of app form web browser](https://github.com/segvndo/tweeter/blob/master/docs/browserView.png)
+![Screenshot of created URL page](https://github.com/segvndo/tinyapp/blob/main/docs/createdURLpage.jpg)
 
-![Screenshot of app form web browser](https://github.com/segvndo/tweeter/blob/master/docs/browserView.png)
+![Register page](https://github.com/segvndo/tinyapp/blob/main/docs/register.jpg)
 
-![Screenshot of app form web browser](https://github.com/segvndo/tweeter/blob/master/docs/browserView.png)
+![Screenshot of generated short URL](https://github.com/segvndo/tinyapp/blob/main/docs/shortURL.jpg)
