@@ -128,6 +128,9 @@ app.get("/urls/:id", (req, res) => {
   if (!url) {
     return res.status(403).send("URL Not Found");
   }
+  console.log(req.session.user_id);
+  console.log(url.userID)
+  console.log(url);
   if (url.userID !== req.session.user_id) {
     return res.status(403).send("Access Denied");
   }
@@ -190,7 +193,7 @@ app.post('/urls/:id/delete', (req, res) => {
 app.post('/urls/:id/edit', (req, response) => {
   const id = req.params.id
   const newURL = req.body.longUrls
-  urlDatabase[id] = newURL
+  urlDatabase[id].longURL = newURL
   response.redirect(`/urls/${id}`);
 });
 
@@ -260,7 +263,7 @@ app.post('/login', (req, res) => {
 //Logout; redirect to urls
 app.post("/logout", (req, res) => {
   //res.clearCookie('user_id');
-  req.session.user_id = null;
+  req.session = null;
   res.redirect('/login');
 });
 
