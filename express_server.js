@@ -17,7 +17,6 @@ app.use(cookieSession ({
 
 //Parses req.body for POST requests
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
 
 //res.render("urls_index", templateVars) will take info from urls_index and show it in the browser. In this case, the templateVars, which is an object containing an object.
 app.get("/urls", (req, res) => {
